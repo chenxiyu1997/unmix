@@ -175,7 +175,6 @@ def save_abu_images(save_dir, abu_est, edm_result, num_images):
     # 遍历并保存每个曲线
     for i in range(num_images):
         plt.plot(edm_result[:, i])
-        plt.axis('off')  # 移除坐标轴
 
         # 构建文件保存路径
         save_path = os.path.join(save_dir, f'edm_image_{i}.png').replace("\\", "/")
@@ -275,14 +274,14 @@ def generate_pdf_with_images_and_errors(report_title, lidar, image, abundance_im
             pdf.set_y(new_y)
 
     # 添加丰度图和端元曲线图对比部分
-    add_images_section('Abundance Maps Comparison:', zip(abundance_images_real, abundance_images_unmixed))
-    add_images_section('Endmember Spectra Comparison:', zip(spectrum_images_real, spectrum_images_unmixed))
+    add_images_section(f"Abundance Maps Comparison (RMSE: {errors['RMSE']:.4f}):", zip(abundance_images_real, abundance_images_unmixed))
+    add_images_section(f"Endmember Spectra Comparison (SAD: {errors['SAD']:.4f}):", zip(spectrum_images_real, spectrum_images_unmixed))
 
-    # 误差数据部分
-    pdf.add_page()
-    pdf.cell(0, 10, 'Error Data:', 0, 1)
-    for error_name, error_value in errors.items():
-        pdf.cell(0, 10, f"{error_name}: {error_value:.5f}", 0, 1)
+    # # 误差数据部分
+    # pdf.add_page()
+    # pdf.cell(0, 10, 'Error Data:', 0, 1)
+    # for error_name, error_value in errors.items():
+    #     pdf.cell(0, 10, f"{error_name}: {error_value:.5f}", 0, 1)
 
     # 保存 PDF
     pdf.output(output_filename)
