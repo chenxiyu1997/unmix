@@ -30,14 +30,14 @@ class Config:
         self.gpu_id = '0,1,2'  # GPU ID
         self.batch_size = 128  # 批量大小
         self.patch = 1  # 输入数据大小
-        self.learning_rate_en = 3e-4  # 编码器学习率
-        self.learning_rate_de = 1e-4  # 解码器学习率
+        self.learning_rate_en = 0.0003  # 编码器学习率
+        self.learning_rate_de = 0.0001  # 解码器学习率
         self.weight_decay = 1e-5  # 网络参数正则化
-        self.lamda = 0  # 稀疏正则化
+        self.lamda = 0.03  # 稀疏正则化
         self.reduction = 2  # 压缩减少
-        self.delta = 0  # delta系数
+        self.delta = 1.0  # delta系数
         self.gamma = 0.8  # 学习率衰减
-        self.epoch = 20  # 训练周期
+        self.epoch = 50  # 训练周期
         self.dataset = 'muffle'  # 默认使用的数据集
 
 def getInfo(image_data):

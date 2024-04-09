@@ -111,6 +111,10 @@ def get_lidar_data():
         return jsonify({'error': 'Missing name'}), 400
     try:
         data = find_lidar_data(name)
+        # get cow and row
+        data['row'] = data['MPN'].shape[0]
+        data['col'] = data['MPN'].shape[1]
+        del data['MPN']
         if data:
             return jsonify(data), 200
         else:
@@ -243,6 +247,23 @@ def get_all_image_data():
                 del data['M1']
                 del data['M']
                 data['Y_png'] = base64.b64encode(data['Y_png']).decode('utf-8')
+                all_data.append({'name': name, 'data': data})
+        return jsonify(all_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/get-all-lidar-data', methods=['GET'])
+def get_all_lidar_data():
+    try:
+        names = get_names_from_table('lidar')  # 获取所有雷达数据的名称
+        all_data = []
+        for name in names:
+            data = find_lidar_data(name)  # 获取每个雷达数据的详细信息
+            if data:
+                # 只有当有详细信息时才添加
+                data['row'] = data['MPN'].shape[0]
+                data['col'] = data['MPN'].shape[1]
+                del data['MPN']
                 all_data.append({'name': name, 'data': data})
         return jsonify(all_data), 200
     except Exception as e:

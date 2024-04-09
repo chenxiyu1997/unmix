@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     # 从数据库中查找数据
     lidar_data = find_lidar_data(name)
-    image_data = find_image_data(blurName)
+    image_data = find_image_data(name)
     
     # 构建并返回input_data字典
     input_data_out = combined_dict = {**lidar_data, **image_data}
@@ -61,13 +61,13 @@ if __name__ == '__main__':
     config.band = input_data_out["band"]
     config.col = input_data_out["col"]
     config.row = input_data_out["row"]
-    config.learning_rate_en = 3e-4  # 编码器学习率
-    config.learning_rate_de = 1e-4  # 解码器学习率
-    config.lamda = 0  # 稀疏正则化
+    config.learning_rate_en = 0.0003  # 编码器学习率
+    config.learning_rate_de = 0.0001  # 解码器学习率
+    config.lamda = 0.03  # 稀疏正则化
     config.reduction = 2  # 压缩减少
-    config.delta = 0  # delta系数
+    config.delta = 1.0  # delta系数
     config.gamma = 0.8  # 学习率衰减
-    config.epoch = 2  # 训练周期
+    config.epoch = 50  # 训练周期
 
     result = json.dumps(unmixing(config, input_data_out), indent=4)
 
