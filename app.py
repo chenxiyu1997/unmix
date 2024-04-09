@@ -114,6 +114,7 @@ def get_lidar_data():
         # get cow and row
         data['row'] = data['MPN'].shape[0]
         data['col'] = data['MPN'].shape[1]
+        data['MPN_png'] = base64.b64encode(data['MPN_png']).decode('utf-8')
         del data['MPN']
         if data:
             return jsonify(data), 200
@@ -156,7 +157,7 @@ def get_image_data():
 @app.route('/api/blur/lidar', methods=['POST'])
 def process_lidar():
     data = request.form
-    result = blur_lidar(data['name'], data['blurName'], data['value'])
+    result = blur_lidar(data['name'], data['outName'], float(data['sigma']))
     return jsonify({"result": result})
 
 @app.route('/api/blur/image', methods=['POST'])
@@ -264,6 +265,7 @@ def get_all_lidar_data():
                 data['row'] = data['MPN'].shape[0]
                 data['col'] = data['MPN'].shape[1]
                 del data['MPN']
+                data['MPN_png'] = base64.b64encode(data['MPN_png']).decode('utf-8')
                 all_data.append({'name': name, 'data': data})
         return jsonify(all_data), 200
     except Exception as e:
