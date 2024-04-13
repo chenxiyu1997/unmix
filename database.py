@@ -100,7 +100,7 @@ def add_user(username, password, sex, age, phone, email, permission):
     conn = sqlite3.connect('database/hsi_data.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO users (username, password_hash, sex, age, phone, email, permission)
+        REPLACE INTO users (username, password_hash, sex, age, phone, email, permission)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (username, password_hash, sex, age, phone, email, permission))
     conn.commit()
@@ -109,7 +109,7 @@ def add_user_lidar(username, lidar_name):
     conn = sqlite3.connect('database/hsi_data.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO user_lidar (username, lidar_name)
+        REPLACE INTO user_lidar (username, lidar_name)
         VALUES (?, ?)
     ''', (username, lidar_name))
     conn.commit()
@@ -118,7 +118,7 @@ def add_user_image_data(username, image_data_name):
     conn = sqlite3.connect('database/hsi_data.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO user_image_data (username, image_data_name)
+        REPLACE INTO user_image_data (username, image_data_name)
         VALUES (?, ?)
     ''', (username, image_data_name))
     conn.commit()
