@@ -10,6 +10,7 @@ import tempfile
 from io import BytesIO
 from PIL import Image
 
+from database import add_deconvolution_record
 import matplotlib
 import matplotlib.pyplot as plt
 import scipy.io as sio
@@ -39,6 +40,28 @@ class Config:
         self.gamma = 0.8  # 学习率衰减
         self.epoch = 50  # 训练周期
         self.dataset = 'muffle'  # 默认使用的数据集
+
+    def to_dict(self):
+        return {
+            "num_classes": self.num_classes,
+            "band": self.band,
+            "col": self.col,
+            "row": self.row,
+            "fix_random": self.fix_random,
+            "seed": self.seed,
+            "gpu_id": self.gpu_id,
+            "batch_size": self.batch_size,
+            "patch": self.patch,
+            "learning_rate_en": self.learning_rate_en,
+            "learning_rate_de": self.learning_rate_de,
+            "weight_decay": self.weight_decay,
+            "lamda": self.lamda,
+            "reduction": self.reduction,
+            "delta": self.delta,
+            "gamma": self.gamma,
+            "epoch": self.epoch,
+            "dataset": self.dataset
+        }
 
 def getInfo(image_data):
     #row col num_classes band
@@ -324,5 +347,7 @@ def unmixing(config, input_data):
     generate_pdf_with_images_and_errors("Hyperspectral Unmixing Data Report", try_get_lidar_png(input_data), input_data['Y_png'], abuRealImages, abuImages, edmRealImages, edmImages, errors)
 
     unmixRes = {'rmse': rmse, 'sad': sad, 'abuImages': abuImages, 'edmImages': edmImages}
+
+    add_deconvolution_record(input_data['image_name'], input_data['lidar_name'], input_data['username'], abu_est, edm_result, config.to_dict(), rmse, sad)
 
     return unmixRes

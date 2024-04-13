@@ -8,7 +8,7 @@ import base64
 import os
 import scipy.io as sio
 from unmixing import Config, unmixing
-from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image
+from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image, add_user, add_user_lidar, add_user_image_data, get_user_lidars, get_user_image_data, delete_user, get_user_info
 
 app = Flask(__name__)
 CORS(app)
@@ -198,6 +198,7 @@ def unmix():
     
     # 构建并返回input_data字典
     input_data_out = {**lidar_data, **image_data}
+    input_data_out["username"] = "admin"
 
     # 初始化 config
     config = Config()
@@ -270,6 +271,59 @@ def get_all_lidar_data():
         return jsonify(all_data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+#获取用户信息
+@app.route('/add_user', methods=['POST'])
+def add_user_route():
+    add_user(
+        request.form['username'],
+        request.form['password_hash'],
+        request.form['sex'],
+        request.form['age'],
+        request.form['phone'],
+        request.form['email'],
+        request.form['permission']
+    )
+    return jsonify({"status": "success"}), 201
+
+@app.route('/add_user_lidar', methods=['POST'])
+def add_user_lidar_route():
+    username = request.form['username']
+    lidar_name = request.form['lidar_name']
+    add_user_lidar(username, lidar_name)
+    return jsonify({"status": "success"}), 201
+
+@app.route('/add_user_image_data', methods=['POST'])
+def add_user_image_data_route():
+    username = request.form['username']
+    image_data_name = request.form['image_data_name']
+    add_user_image_data(username, image_data_name)
+    return jsonify({"status": "success"}), 201
+
+@app.route('/get_user_lidars/<username>', methods=['GET'])
+def get_user_lidars_route(username):
+    lidars = get_user_lidars(username)
+    return jsonify(lidars)
+
+@app.route('/get_user_image_data/<username>', methods=['GET'])
+def get_user_image_data_route(username):
+    image_data = get_user_image_data(username)
+    return jsonify(image_data)
+
+@app.route('/delete_user', methods=['POST'])
+def delete_user_route():
+    username = request.form['username']
+    delete_user(username)
+    return jsonify({"status": "success"}), 200
+
+@app.route('/get_user_info/<username>', methods=['GET'])
+def get_user_info_route(username):
+    user_info = get_user_info(username)
+    if user_info:
+        info_dict = dict(zip(['username', 'sex', 'age', 'phone', 'email', 'permission'], user_info))
+        return jsonify(info_dict)
+    else:
+        return jsonify({"error": "User not found"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

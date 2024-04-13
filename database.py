@@ -1,3 +1,5 @@
+import hashlib
+import json
 import pickle
 import sqlite3
 import numpy as np
@@ -21,7 +23,8 @@ def initDatabase():
 
     # 创建一个名为lidar的表，如果该表不存在
     c.execute('''CREATE TABLE IF NOT EXISTS lidar
-                (name TEXT PRIMARY KEY, MPN BLOB, MPN_png BLOB)''')
+                (name TEXT PRIMARY KEY, MPN BLOB, MPN_png BLOB,
+                upload_time DATETIME DEFAULT CURRENT_TIMESTAMP)''')
 
     # 创建一个名为image_data的表，如果该表不存在
     # 其中name作为唯一标识符
@@ -35,12 +38,140 @@ def initDatabase():
                 row INTEGER, 
                 col INTEGER, 
                 num INTEGER, 
-                band INTEGER)''')
+                band INTEGER,
+                upload_time DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    
+    # 创建一个名为users的表
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        password_hash TEXT NOT NULL,
+        sex TEXT,
+        age INTEGER,
+        phone TEXT,
+        email TEXT,
+        permission TEXT
+    )''')
+
+    # 创建用户与lidar数据的关系表
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS user_lidar (
+        username TEXT,
+        lidar_name TEXT,
+        PRIMARY KEY (username, lidar_name),
+        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE,
+        FOREIGN KEY (lidar_name) REFERENCES lidar(name) ON DELETE CASCADE
+    )''')
+
+    # 创建用户与高光谱数据的关系表
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS user_image_data (
+        username TEXT,
+        image_data_name TEXT,
+        PRIMARY KEY (username, image_data_name),
+        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE,
+        FOREIGN KEY (image_data_name) REFERENCES image_data(name) ON DELETE CASCADE
+    )''')
+
+    # 创建解混记录表，将 abu_est 和 edm_result 设置为 BLOB 类型
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS deconvolution_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            high_spectral_data TEXT,
+            lidar_data TEXT,
+            username TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            abu_est BLOB,
+            edm_result BLOB,
+            deconv_config TEXT,
+            rmse REAL,
+            sad REAL
+        )
+    ''')
 
     # 提交事务
     conn.commit()
     conn.close()
 
+
+# 用户相关信息存储
+def add_user(username, password, sex, age, phone, email, permission):
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO users (username, password_hash, sex, age, phone, email, permission)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (username, password_hash, sex, age, phone, email, permission))
+    conn.commit()
+
+def add_user_lidar(username, lidar_name):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO user_lidar (username, lidar_name)
+        VALUES (?, ?)
+    ''', (username, lidar_name))
+    conn.commit()
+
+def add_user_image_data(username, image_data_name):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO user_image_data (username, image_data_name)
+        VALUES (?, ?)
+    ''', (username, image_data_name))
+    conn.commit()
+
+def get_user_lidars(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT lidar_name FROM user_lidar WHERE username = ?
+    ''', (username,))
+    return cursor.fetchall()
+
+def get_user_image_data(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT image_data_name FROM user_image_data WHERE username = ?
+    ''', (username,))
+    return cursor.fetchall()
+
+def delete_user(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM users WHERE username = ?
+    ''', (username,))
+    conn.commit()
+
+def delete_user_lidar(username, lidar_name):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM user_lidar WHERE username = ? AND lidar_name = ?
+    ''', (username, lidar_name))
+    conn.commit()
+
+def delete_user_image_data(username, image_data_name):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM user_image_data WHERE username = ? AND image_data_name = ?
+    ''', (username, image_data_name))
+    conn.commit()
+
+def get_user_info(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT username, sex, age, phone, email, permission FROM users WHERE username = ?
+    ''', (username,))
+    return cursor.fetchone()
+
+# 高光谱及雷达数据存储
 def get_names_from_table(table_name):
     conn = sqlite3.connect('database/hsi_data.db')  # 替换为你的数据库路径
     c = conn.cursor()
@@ -94,6 +225,7 @@ def find_lidar_data(name):
     if result:
         # 反序列化BLOB数据
         lidar_data = {
+            'lidar_name': name,
             'MPN': pickle.loads(result[1]),
             'MPN_png': result[2]
         }
@@ -141,6 +273,7 @@ def find_image_data(name):
     if result:
         # 反序列化BLOB数据
         data = {
+            'image_name': name,
             'Y': pickle.loads(result[1]),
             'Y_png' : result[2],
             'label': pickle.loads(result[3]),
@@ -196,6 +329,34 @@ def lidar_to_png(lidar):
 
     return png_blob
 
+#操作记录
+def add_deconvolution_record(high_spectral_data, lidar_data, username, abu_est, edm_result, deconv_config, rmse, sad):
+    conn = sqlite3.connect('database/hsi_data.db')
+    c = conn.cursor()
+    # 序列化 abu_est 和 edm_result
+    abu_est_blob = pickle.dumps(abu_est)
+    edm_result_blob = pickle.dumps(edm_result)
+    deconv_config_json = json.dumps(deconv_config)
+    
+    c.execute('''
+        INSERT INTO deconvolution_records (
+            high_spectral_data, lidar_data, username, abu_est, edm_result, deconv_config, rmse, sad
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (high_spectral_data, lidar_data, username, abu_est_blob, edm_result_blob, deconv_config_json, rmse, sad))
+    
+    conn.commit()
+    conn.close()
+
+def delete_deconvolution_record(record_id):
+    conn = sqlite3.connect('database/hsi_data.db')
+    c = conn.cursor()
+    c.execute('''
+        DELETE FROM deconvolution_records WHERE id = ?
+    ''', (record_id,))
+    conn.commit()
+    conn.close()
+
+# 数据处理
 def gaussian_blur_multiband(image_data, sigma=1):
     """
     对三维NumPy数组应用高斯模糊，其中最后一个维度是波段。
