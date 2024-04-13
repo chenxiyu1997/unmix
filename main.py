@@ -108,6 +108,8 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2"
     torch.cuda.set_device(0)
 
+    initDatabase()
+
     creatTestDataBase()
 
     image_file = r'./data/muffle_dataset_130_90.mat'
@@ -115,7 +117,6 @@ if __name__ == '__main__':
     image_file = r'./data/houston_170_dataset.mat'
     input_data1 = sio.loadmat(image_file)
 
-    initDatabase()
     name = "testName"
     blurName = "testBlur"
     
