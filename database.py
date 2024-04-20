@@ -408,7 +408,11 @@ def get_all_unmixing_records_by_name(username):
     ''', (username,))
     records = c.fetchall()
     conn.close()
-    return records
+
+    # Convert records to dictionaries
+    records_dict = [dict(row) for row in records]
+
+    return records_dict
 
 # 数据处理
 def gaussian_blur_multiband(image_data, sigma=1):

@@ -85,7 +85,12 @@ def creatTestDataBase():
         ("bob_builder", "houstonDenoise"),
         ("carol_singer", "houstonBlur"),
         ("dave_runner", "muffleBlur"),
-        ("eve_hacker", "houstonSharpen")
+        ("eve_hacker", "houstonSharpen"),
+        ("shareSpace", "muffle"),
+        ("shareSpace", "muffleBlur"),
+        ("shareSpace", "muffleDenoise"),
+        ("shareSpace", "houston"),
+        ("shareSpace", "houstonBlur"),
     ]
 
     # 执行分配
