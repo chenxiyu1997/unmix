@@ -270,7 +270,8 @@ def find_lidar_data(name):
         lidar_data = {
             'lidar_name': name,
             'MPN': pickle.loads(result[1]),
-            'MPN_png': result[2]
+            'MPN_png': result[2],
+            'upload_time': result[3],
         }
         return lidar_data
     else:
@@ -326,6 +327,7 @@ def find_image_data(name):
             'col': result[7],
             'num' : result[8],
             'band': result[9],
+            'upload_time': result[10],
         }
         return data
     else:
