@@ -102,7 +102,7 @@ def creatTestDataBase():
         ("bob_builder", "houston"),
         ("carol_singer", "muffle"),
         ("dave_runner", "houston"),
-        ("eve_hacker", "muffle")
+        ("eve_hacker", "muffle"),
         ("shareSpace", "muffle"),
         ("shareSpace", "houston"),
     ]
