@@ -410,7 +410,18 @@ def get_all_unmixing_records_by_name(username):
     conn.close()
 
     # Convert records to dictionaries
-    records_dict = [dict(row) for row in records]
+    records_dict = []
+    for record in records:
+        record_dict = {
+            'id': record[0],
+            'high_spectral_data': record[1],
+            'lidar_data': record[2],
+            'username': record[3],
+            'timestamp': record[4],
+            'rmse': record[5],
+            'sad': record[6]
+        }
+        records_dict.append(record_dict)
 
     return records_dict
 
