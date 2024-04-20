@@ -103,6 +103,8 @@ def creatTestDataBase():
         ("carol_singer", "muffle"),
         ("dave_runner", "houston"),
         ("eve_hacker", "muffle")
+        ("shareSpace", "muffle"),
+        ("shareSpace", "houston"),
     ]
 
     # 执行分配
