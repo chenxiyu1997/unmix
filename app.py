@@ -8,7 +8,7 @@ import base64
 import os
 import scipy.io as sio
 from unmixing import Config, unmixing
-from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image, add_user, add_user_lidar, add_user_image_data, get_user_lidars, get_user_image_data, delete_user, get_user_info
+from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image, add_user, add_user_lidar, add_user_image_data, get_user_lidars, get_user_image_data, delete_user, get_user_info, get_all_unmixing_records_by_name, get_user_image_datas, get_user_lidar_datas
 
 app = Flask(__name__)
 CORS(app)
@@ -101,6 +101,12 @@ def get_image_data_names():
     names = get_names_from_table('image_data')
     print(names)
     return jsonify(names)
+
+# 获取解混记录
+@app.route('/api/get-unmixing-records/<name>', methods=['GET'])
+def get_unmixing_records(name):
+    records = get_all_unmixing_records_by_name(name)
+    return jsonify(records)
 
 #获取数据详细信息
 @app.route('/api/getinfo/lidar', methods=['POST'])
@@ -271,6 +277,18 @@ def get_all_lidar_data():
         return jsonify(all_data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+#获取指定用户的图像数据
+@app.route('/api/get-image-data-for-user/<username>', methods=['GET'])
+def get_image_data_for_user_route(username):
+    image_data = get_user_image_datas(username)
+    return jsonify(image_data)
+
+#获取指定用户的雷达数据
+@app.route('/api/get-lidar-data-for-user/<username>', methods=['GET'])
+def get_lidar_data_for_user_route(username):
+    lidar_data = get_user_lidar_datas(username)
+    return jsonify(lidar_data)
     
 #获取用户信息
 @app.route('/add_user', methods=['POST'])

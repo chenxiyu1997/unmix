@@ -1,3 +1,4 @@
+from flask import jsonify
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -6,7 +7,7 @@ from utils import print_args, SparseLoss, NonZeroClipper, MinVolumn
 from data_loader import set_loader
 from model import Init_Weights, MUNet
 from unmixing import Config, unmixing
-from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image, add_user, add_user_lidar, add_user_image_data, get_user_lidars, get_user_image_data, delete_user, get_user_info
+from database import initDatabase, insert_lidar_data, delete_lidar_data, find_lidar_data, insert_image_data, delete_image_data, find_image_data, get_names_from_table, blur_image, blur_lidar, denoise_image, sharpen_image, add_user, add_user_lidar, add_user_image_data, get_user_lidars, get_user_image_data, delete_user, get_user_info, get_all_unmixing_records_by_name, get_user_image_datas, get_user_lidar_datas
 
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -135,9 +136,10 @@ if __name__ == '__main__':
     blur_lidar(name, blurName, 2)
     sharpen_image(name, blurName, 2)
 
+    name = "muffle"
     # 从数据库中查找数据
     lidar_data = find_lidar_data(name)
-    image_data = find_image_data(name)
+    image_data = find_image_data("muffle")
     
     # 构建并返回input_data字典
     input_data_out = combined_dict = {**lidar_data, **image_data}

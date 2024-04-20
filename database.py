@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 import pickle
@@ -75,7 +76,7 @@ def initDatabase():
 
     # 创建解混记录表，将 abu_est 和 edm_result 设置为 BLOB 类型
     c.execute('''
-        CREATE TABLE IF NOT EXISTS deconvolution_records (
+        CREATE TABLE IF NOT EXISTS unmixing_records (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             high_spectral_data TEXT,
             lidar_data TEXT,
@@ -130,6 +131,48 @@ def get_user_lidars(username):
         SELECT lidar_name FROM user_lidar WHERE username = ?
     ''', (username,))
     return cursor.fetchall()
+
+def get_user_images(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT image_data_name FROM user_image_data WHERE username = ?
+    ''', (username,))
+    return cursor.fetchall()
+
+def get_user_image_datas(username):
+    names = get_user_images(username)
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    all_data = []
+    for name in names:
+        data = find_image_data(name[0])  # 获取每张图片的详细信息
+        if data:
+            # 只有当有详细信息时才添加
+            del data['Y']
+            del data['label']
+            del data['M1']
+            del data['M']
+            data['Y_png'] = base64.b64encode(data['Y_png']).decode('utf-8')
+            all_data.append({'name': name, 'data': data})
+    
+    return all_data
+
+def get_user_lidar_datas(username):
+    names = get_user_lidars(username)
+    conn = sqlite3.connect('database/hsi_data.db')
+    cursor = conn.cursor()
+    all_data = []
+    for name in names:
+        data = find_lidar_data(name[0])  # 获取每张图片的详细信息
+        if data:
+            # 只有当有详细信息时才添加
+            del data['MPN']
+            data['MPN_png'] = base64.b64encode(data['MPN_png']).decode('utf-8')
+            all_data.append({'name': name[0], 'data': data})
+    
+    return all_data
+
 
 def get_user_image_data(username):
     conn = sqlite3.connect('database/hsi_data.db')
@@ -339,7 +382,7 @@ def add_deconvolution_record(high_spectral_data, lidar_data, username, abu_est, 
     deconv_config_json = json.dumps(deconv_config)
     
     c.execute('''
-        INSERT INTO deconvolution_records (
+        INSERT INTO unmixing_records (
             high_spectral_data, lidar_data, username, abu_est, edm_result, deconv_config, rmse, sad
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', (high_spectral_data, lidar_data, username, abu_est_blob, edm_result_blob, deconv_config_json, rmse, sad))
@@ -351,10 +394,21 @@ def delete_deconvolution_record(record_id):
     conn = sqlite3.connect('database/hsi_data.db')
     c = conn.cursor()
     c.execute('''
-        DELETE FROM deconvolution_records WHERE id = ?
+        DELETE FROM unmixing_records WHERE id = ?
     ''', (record_id,))
     conn.commit()
     conn.close()
+
+def get_all_unmixing_records_by_name(username):
+    conn = sqlite3.connect('database/hsi_data.db')
+    c = conn.cursor()
+    c.execute('''
+        SELECT id, high_spectral_data, lidar_data, username, timestamp, rmse, sad 
+        FROM unmixing_records WHERE username = ?
+    ''', (username,))
+    records = c.fetchall()
+    conn.close()
+    return records
 
 # 数据处理
 def gaussian_blur_multiband(image_data, sigma=1):
