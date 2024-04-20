@@ -167,6 +167,8 @@ def get_user_lidar_datas(username):
         data = find_lidar_data(name[0])  # 获取每张图片的详细信息
         if data:
             # 只有当有详细信息时才添加
+            data['row'] = data['MPN'].shape[0]
+            data['col'] = data['MPN'].shape[1]
             del data['MPN']
             data['MPN_png'] = base64.b64encode(data['MPN_png']).decode('utf-8')
             all_data.append({'name': name[0], 'data': data})
